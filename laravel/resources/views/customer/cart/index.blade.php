@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function removeCartItem(itemId, row) {
-        fetch('/api/cart/remove', {
+        fetch('/cart/remove', {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
