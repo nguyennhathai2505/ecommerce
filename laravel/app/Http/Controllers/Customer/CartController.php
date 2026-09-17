@@ -85,8 +85,8 @@ public function add(Request $request)
 {
     $validator = Validator::make($request->all(), [
         'product_id' => 'required|exists:products,id',
-        'variant_id' => 'required|integer',
-        'variant_type' => 'required|in:shoe,cloth',
+        'variant_id' => 'nullable|integer',
+        'variant_type' => 'nullable|in:shoe,cloth',
         'size' => 'required|string|max:20',
         'color' => 'required|string|max:50',
         'stud_type' => 'nullable|string|max:20',
