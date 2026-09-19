@@ -35,6 +35,16 @@
                     @include('customer.partials.cart-mini')
                 </div>
 
+                <!-- Wishlist -->
+                <a href="{{ route('customer.wishlist.index') }}"
+                   class="relative text-gray-500 transition hover:text-red-500"
+                   aria-label="Danh sách yêu thích">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                    <span id="wishlist-count" class="absolute -right-2 -top-2 hidden h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] leading-none text-white">0</span>
+                </a>
+
                 <!-- Auth -->
                 @auth
                     <a href="{{ route('customer.dashboard') }}" class="text-gray-700 hover:text-black flex items-center space-x-1 text-sm">
@@ -141,7 +151,35 @@ document.addEventListener('DOMContentLoaded', function() {
 // Gọi lại khi có sự kiện thêm vào giỏ hàng
 window.updateCartCount = updateCartCount;
 
+// ===== CẬP NHẬT SỐ LƯỢNG WISHLIST =====
+function updateWishlistCount(count) {
+    const badge = document.getElementById('wishlist-count');
+    if (!badge) return;
 
+    badge.textContent = count;
+    badge.classList.toggle('hidden', count <= 0);
+    badge.classList.toggle('flex', count > 0);
+}
+
+function getWishlistCount() {
+    fetch('{{ route("customer.wishlist.count") }}', {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.wishlist_count !== undefined) {
+            updateWishlistCount(data.wishlist_count);
+        }
+    })
+    .catch(error => console.error('Error fetching wishlist count:', error));
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    getWishlistCount();
+});
 
 // ===== CẬP NHẬT CART MINI =====
 function loadCartMini() {

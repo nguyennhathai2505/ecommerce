@@ -4,17 +4,31 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Services\WishlistService;
 
 class HomeController extends Controller
 {
+    public function __construct(protected WishlistService $wishlistService)
+    {
+    }
+
     public function index()
     {
-        $newProducts = Product::where('status', 'active')
+        $user = auth()->user();
+        $newProducts = $this->wishlistService->withWishlistStatus(
+            Product::where('status', 'active'),
+            $user
+        )
+            ->with(['shoe', 'cloth', 'shoesVariants', 'clothesVariants'])
             ->orderBy('created_at', 'desc')
             ->limit(8)
             ->get();
 
-        $popularProducts = Product::where('status', 'active')
+        $popularProducts = $this->wishlistService->withWishlistStatus(
+            Product::where('status', 'active'),
+            $user
+        )
+            ->with(['shoe', 'cloth', 'shoesVariants', 'clothesVariants'])
             ->orderBy('created_at', 'desc')
             ->limit(8)
             ->get();

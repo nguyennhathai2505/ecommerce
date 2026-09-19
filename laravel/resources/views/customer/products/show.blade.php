@@ -132,11 +132,10 @@
                 <button id="buy-now" class="flex-1 bg-green-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg hover:bg-green-700 transition font-medium text-sm sm:text-base">
                     Mua ngay
                 </button>
-                <button id="wishlist-btn" class="flex items-center justify-center border border-gray-300 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg hover:bg-gray-50 transition">
-                    <svg class="h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                    </svg>
-                </button>
+                @include('customer.partials.wishlist-button', [
+                    'product' => $product,
+                    'variant' => 'detail',
+                ])
             </div>
             </div>
         </div>

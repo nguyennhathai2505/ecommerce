@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\ImageUploadController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Customer\CartController;
 use App\Http\Controllers\Customer\OrderController;
+use App\Http\Controllers\Customer\WishlistController;
 
 Route::get('/', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
@@ -53,6 +54,10 @@ Route::middleware(['auth', 'role:customer'])->prefix('customer')->group(function
     Route::get('/products', [CustomerProductController::class, 'index'])->name('products.index');
     Route::get('/products/{slug}', [CustomerProductController::class, 'show'])->name('products.show');
 
+    Route::get('/wishlist', [WishlistController::class, 'index'])->name('customer.wishlist.index');
+    Route::get('/wishlist/count', [WishlistController::class, 'count'])->name('customer.wishlist.count');
+    Route::post('/wishlist/{product}', [WishlistController::class, 'store'])->name('customer.wishlist.store');
+    Route::delete('/wishlist/{product}', [WishlistController::class, 'destroy'])->name('customer.wishlist.destroy');
 
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
     

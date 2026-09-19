@@ -5,13 +5,24 @@ namespace App\Http\Controllers\Customer;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
+use App\Services\WishlistService;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
+    protected WishlistService $wishlistService;
+
+    public function __construct(WishlistService $wishlistService)
+    {
+        $this->wishlistService = $wishlistService;
+    }
+
     public function index(Request $request)
     {
-        $query = Product::where('status', 'active');
+        $query = $this->wishlistService->withWishlistStatus(
+            Product::where('status', 'active'),
+            $request->user()
+        );
 
         if ($request->has('category')) {
             $category = Category::where('slug', $request->category)->first();
@@ -56,7 +67,9 @@ class ProductController extends Controller
             default: $query->orderBy('created_at', 'desc');
         }
 
-        $products = $query->paginate(12);
+        $products = $query
+            ->with(['shoe', 'cloth', 'shoesVariants', 'clothesVariants'])
+            ->paginate(12);
         $categories = Category::where('status', 'active')->get();
         $selectedCategory = $request->category;
 
@@ -65,14 +78,21 @@ class ProductController extends Controller
 
     public function show($slug)
     {
-        $product = Product::where('slug', $slug)
-            ->where('status', 'active')
+        $user = auth()->user();
+        $product = $this->wishlistService->withWishlistStatus(
+            Product::where('slug', $slug)->where('status', 'active'),
+            $user
+        )
             ->with(['category', 'shoesVariants', 'clothesVariants'])
             ->firstOrFail();
 
-        $relatedProducts = Product::where('category_id', $product->category_id)
-            ->where('id', '!=', $product->id)
-            ->where('status', 'active')
+        $relatedProducts = $this->wishlistService->withWishlistStatus(
+            Product::where('category_id', $product->category_id)
+                ->where('id', '!=', $product->id)
+                ->where('status', 'active'),
+            $user
+        )
+            ->with(['shoe', 'cloth', 'shoesVariants', 'clothesVariants'])
             ->limit(4)
             ->get();
 
