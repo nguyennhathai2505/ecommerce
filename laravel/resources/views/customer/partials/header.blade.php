@@ -199,7 +199,7 @@ function loadCartMini() {
             tempDiv.innerHTML = html;
             const newCartMini = tempDiv.querySelector('#cart-mini');
             if (newCartMini) {
-                cartMiniContainer.outerHTML = newCartMini.outerHTML;
+                cartMiniContainer.innerHTML = newCartMini.innerHTML;
             }
             // Cập nhật badge
             const count = parseInt(document.querySelector('#cart-mini .flex.justify-between.items-center span.text-xs')?.textContent) || 0;
