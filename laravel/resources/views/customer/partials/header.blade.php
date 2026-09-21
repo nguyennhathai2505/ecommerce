@@ -148,6 +148,13 @@ document.addEventListener('DOMContentLoaded', function() {
     getCartCount();
 });
 
+window.addEventListener('pageshow', function(event) {
+    if (event.persisted) {
+        getCartCount();
+        loadCartMini();
+    }
+});
+
 // Gọi lại khi có sự kiện thêm vào giỏ hàng
 window.updateCartCount = updateCartCount;
 
