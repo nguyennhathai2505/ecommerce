@@ -185,9 +185,78 @@
             });
         });
 
-        // Add to cart (demo)
+        // Add to cart
         document.getElementById('add-to-cart')?.addEventListener('click', function() {
-            alert('Thêm vào giỏ hàng thành công!');
+            const sizeBtn = document.querySelector('.size-option.border-black');
+            const colorBtn = document.querySelector('.color-option.border-black');
+            const studBtn = document.querySelector('.stud-option.border-black');
+            const quantity = parseInt(qtyInput.value) || 1;
+            const isShoe = @json($product->product_type === 'SHOE');
+
+            if (!sizeBtn) {
+                alert('Vui lòng chọn size.');
+                return;
+            }
+
+            if (!colorBtn) {
+                alert('Vui lòng chọn màu sắc.');
+                return;
+            }
+
+            if (isShoe && !studBtn) {
+                alert('Vui lòng chọn loại đinh.');
+                return;
+            }
+
+            const size = sizeBtn.dataset.size;
+            const color = colorBtn.dataset.color;
+            const studType = studBtn ? studBtn.dataset.stud : null;
+            const variants = @json($product->variants);
+            const variant = variants.find(item =>
+                String(item.size) === size
+                && item.color === color
+                && (!isShoe || item.stud_type === studType)
+            );
+
+            if (!variant) {
+                alert('Biến thể sản phẩm đã chọn không tồn tại.');
+                return;
+            }
+
+            fetch('{{ route("api.cart.add") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                },
+                body: JSON.stringify({
+                    product_id: {{ $product->id }},
+                    variant_id: variant.id,
+                    variant_type: isShoe ? 'shoe' : 'cloth',
+                    size: size,
+                    color: color,
+                    stud_type: studType,
+                    quantity: quantity,
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (window.updateCartCount) {
+                        window.updateCartCount(data.cart_count);
+                    }
+                    if (window.loadCartMini) {
+                        window.loadCartMini();
+                    }
+                    alert(data.message);
+                } else {
+                    alert(data.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi xảy ra. Vui lòng thử lại.');
+            });
         });
 
         // Hàm changeMainImage

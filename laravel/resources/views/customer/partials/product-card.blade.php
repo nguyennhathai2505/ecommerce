@@ -258,6 +258,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (window.updateCartCount) {
                         window.updateCartCount(data.cart_count);
                     }
+                    if (window.loadCartMini) {
+                        window.loadCartMini();
+                    }
                     
                     // Hiển thị thành công
                     this.textContent = '✓ Đã thêm';
