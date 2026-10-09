@@ -25,7 +25,7 @@
                     </thead>
                     <tbody id="cart-items">
                         @foreach($cart->items as $item)
-                            <tr class="border-b cart-item" data-item-id="{{ $item->id }}">
+                            <tr class="border-b cart-item" data-item-id="{{ $item->guest_key ?? $item->id }}">
                                 <td class="px-4 py-3">
                                     <div class="flex items-center space-x-3">
                                         <div class="w-12 h-12 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
@@ -143,11 +143,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // Xóa sản phẩm
     document.querySelectorAll('.remove-item').forEach(btn => {
         btn.addEventListener('click', function() {
-            if (confirm('Bạn có chắc muốn xóa sản phẩm này?')) {
-                const row = this.closest('.cart-item');
-                const itemId = row.dataset.itemId;
-                removeCartItem(itemId, row);
-            }
+            const row = this.closest('.cart-item');
+            const itemId = row.dataset.itemId;
+
+            window.showConfirmModal({
+                title: 'Xóa sản phẩm khỏi giỏ hàng?',
+                message: 'Sản phẩm này sẽ được xóa khỏi giỏ hàng của bạn.',
+                confirmText: 'Xóa sản phẩm',
+                onConfirm: function() {
+                    removeCartItem(itemId, row);
+                },
+            });
         });
     });
 
@@ -155,7 +161,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const itemId = row.dataset.itemId;
         const quantity = row.querySelector('.quantity-input').value;
 
-        fetch('/api/cart/update', {
+        fetch('{{ route("api.cart.update") }}', {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -174,14 +180,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     new Intl.NumberFormat('vi-VN').format(data.cart_total) + ' ₫';
                 location.reload();
             } else {
-                alert(data.message || 'Có lỗi xảy ra');
+                window.showToast(data.message || 'Có lỗi xảy ra. Vui lòng thử lại.', 'error');
             }
         })
-        .catch(error => console.error('Error:', error));
+        .catch(error => {
+            console.error('Error:', error);
+            window.showToast('Có lỗi xảy ra. Vui lòng thử lại.', 'error');
+        });
     }
 
     function removeCartItem(itemId, row) {
-        fetch('/cart/remove', {
+        fetch('{{ route("api.cart.remove") }}', {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
@@ -198,14 +207,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateHeaderCartCount(data.cart_count);
                 document.getElementById('cart-total').textContent = 
                     new Intl.NumberFormat('vi-VN').format(data.cart_total) + ' ₫';
+                window.showToast(data.message || 'Đã xóa sản phẩm khỏi giỏ hàng.');
                 if (document.querySelectorAll('.cart-item').length === 0) {
-                    location.reload();
+                    setTimeout(function() { location.reload(); }, 800);
                 }
             } else {
-                alert(data.message || 'Có lỗi xảy ra');
+                window.showToast(data.message || 'Có lỗi xảy ra. Vui lòng thử lại.', 'error');
             }
         })
-        .catch(error => console.error('Error:', error));
+        .catch(error => {
+            console.error('Error:', error);
+            window.showToast('Có lỗi xảy ra. Vui lòng thử lại.', 'error');
+        });
     }
 
     function updateHeaderCartCount(count) {

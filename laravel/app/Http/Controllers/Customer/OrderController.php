@@ -24,29 +24,20 @@ class OrderController extends Controller
     }
 
     public function checkout(){
-        if(!Auth::check()){
-            return redirect()->route('/')->with('error', 'Vui Lòng đăng nhập để đặt hàng.');
-        }
-
         $cart = $this->cartService->getCart();
         if($cart->items->isEmpty()){
             return redirect()->route('cart.index')->with('error', 'Giỏ hàng trống');
         }
 
         $cartTotal = $this->cartService->getCartTotal();
-        return view('customer.checkout.index', compact('cart', 'cartTotal'));
+        $checkoutData = session('checkout.form', []);
+        return view('customer.checkout.index', compact('cart', 'cartTotal', 'checkoutData'));
     }
 
     public function placeOrder(Request $request){
-        if(!Auth::check()){
-            return response()->json([
-                'success' => false,
-                'message' => 'Vui lòng đăng nhập để đặt hàng.'
-            ], 401);
-        }
-
         $validator = Validator::make($request->all(), [
             'customer_name'=> 'required|string|max:255',
+            'customer_email'=> 'required|email|max:255',
             'customer_phone'=>'required|string|max:20',
             'shipping_address' => 'required|string|max:500',
             'note' => 'nullable|string|max:500',
@@ -60,8 +51,23 @@ class OrderController extends Controller
             ], 422);
         }
 
+        $checkoutData = $validator->validated();
+
+        if(!Auth::check()){
+            $request->session()->put('checkout.form', $checkoutData);
+            $request->session()->put('checkout.auth_pending', true);
+
+            return response()->json([
+                'success' => false,
+                'requires_auth' => true,
+                'message' => 'Vui lòng đăng ký tài khoản để hoàn tất đặt hàng.',
+                'redirect_url' => route('register'),
+            ], 401);
+        }
+
         try{
-            $order =  $this->orderService->createOrder($request->all());
+            $order =  $this->orderService->createOrder($checkoutData);
+            $request->session()->forget(['checkout.form', 'checkout.auth_pending']);
             return response()->json([
                     'success' => true,
                     'message' => 'Đặt hàng thành công!',

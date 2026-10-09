@@ -14,36 +14,6 @@
         </a>
     </div>
 </div> --}}
-
-
-
-@php
-    $cartItems = collect();
-    $cartCount = 0;
-    $cartTotal = 0;
-    
-    if (auth()->check()) {
-        $cart = \App\Models\Cart::where('user_id', auth()->id())->first();
-        if ($cart) {
-            $cartItems = $cart->items()->with('product')->get();
-            $cartCount = $cartItems->sum('quantity');
-            $cartTotal = $cartItems->sum(function($item) {
-                return $item->price * $item->quantity;
-            });
-        }
-    } else {
-        $sessionId = session()->getId();
-        $cart = \App\Models\Cart::where('session_id', $sessionId)->first();
-        if ($cart) {
-            $cartItems = $cart->items()->with('product')->get();
-            $cartCount = $cartItems->sum('quantity');
-            $cartTotal = $cartItems->sum(function($item) {
-                return $item->price * $item->quantity;
-            });
-        }
-    }
-@endphp
-
 <div id="cart-mini" class="absolute right-0 mt-2 w-72 sm:w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 hidden z-50">
     <div class="px-4 py-2 border-b border-gray-200 flex justify-between items-center">
         <h4 class="font-semibold text-gray-900 text-sm">Giỏ hàng</h4>

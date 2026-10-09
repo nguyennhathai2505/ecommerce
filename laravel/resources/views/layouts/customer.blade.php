@@ -26,6 +26,12 @@
         @include('customer.partials.footer')
     </div>
 
+    @guest
+        @include('customer.partials.auth-required-modal')
+    @endguest
+
+    @include('customer.partials.confirm-modal')
+
     <!-- Toast -->
     @include('customer.partials.toast')
 

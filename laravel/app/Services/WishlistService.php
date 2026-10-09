@@ -12,8 +12,12 @@ use Illuminate\Validation\ValidationException;
 
 class WishlistService
 {
-    public function withWishlistStatus(Builder|Relation $query, User $user): Builder|Relation
+    public function withWishlistStatus(Builder|Relation $query, ?User $user): Builder|Relation
     {
+        if(!$user){
+            return $query;
+        }
+
         return $query->withExists([
             'wishlists as is_wishlisted' => fn ($query) => $query->where('user_id', $user->id),
         ]);

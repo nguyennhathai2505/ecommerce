@@ -32,12 +32,16 @@
                         </svg>
                         <span class="absolute -top-1 -right-1 bg-black text-white text-[10px] leading-none rounded-full h-4 w-4 flex items-center justify-center">0</span>
                     </button>
-                    @include('customer.partials.cart-mini')
+                    <x-customer.cart-mini />
                 </div>
 
                 <!-- Wishlist -->
                 <a href="{{ route('customer.wishlist.index') }}"
                    class="relative text-gray-500 transition hover:text-red-500"
+                   @guest
+                       data-auth-required="wishlist"
+                       data-auth-message="Đăng nhập để xem và quản lý danh sách yêu thích của bạn."
+                   @endguest
                    aria-label="Danh sách yêu thích">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -47,12 +51,39 @@
 
                 <!-- Auth -->
                 @auth
-                    <a href="{{ route('customer.dashboard') }}" class="text-gray-700 hover:text-black flex items-center space-x-1 text-sm">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        <span class="hidden sm:inline">{{ Auth::user()->name }}</span>
-                    </a>
+                    <div class="relative">
+                        <button type="button" id="account-toggle" class="flex items-center space-x-1 text-sm text-gray-700 hover:text-black" aria-expanded="false" aria-haspopup="menu">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            <span class="hidden max-w-32 truncate sm:inline">{{ Auth::user()->name }}</span>
+                            <svg class="hidden h-4 w-4 sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+
+                        <div id="account-menu" class="absolute right-0 z-50 mt-3 hidden w-56 overflow-hidden rounded-xl border border-gray-200 bg-white py-2 shadow-lg" role="menu">
+                            <div class="border-b border-gray-100 px-4 py-2.5">
+                                <p class="truncate text-sm font-medium text-gray-900">{{ Auth::user()->name }}</p>
+                                <p class="truncate text-xs text-gray-500">{{ Auth::user()->email }}</p>
+                            </div>
+                            <a href="{{ route('customer.orders') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 transition hover:bg-gray-50" role="menuitem">
+                                <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M7 4h10a2 2 0 012 2v14l-3-2-4 2-4-2-3 2V6a2 2 0 012-2z" />
+                                </svg>
+                                Lịch sử mua hàng
+                            </a>
+                            <form action="{{ route('logout') }}" method="POST" class="mt-1 border-t border-gray-100 pt-1">
+                                @csrf
+                                <button type="submit" class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-500 transition hover:bg-red-50" role="menuitem">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H9m4 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                    </svg>
+                                    Đăng xuất
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 @else
                     <a href="{{ route('login') }}" class="hidden sm:inline text-gray-700 hover:text-black text-sm">Đăng nhập</a>
                     <a href="{{ route('register') }}" class="hidden sm:inline bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition text-sm">Đăng ký</a>
@@ -98,9 +129,28 @@
     document.addEventListener('DOMContentLoaded', function() {
         const menuToggle = document.getElementById('mobile-menu-toggle');
         const mobileMenu = document.getElementById('mobile-menu');
+        const accountToggle = document.getElementById('account-toggle');
+        const accountMenu = document.getElementById('account-menu');
         menuToggle.addEventListener('click', function() {
             mobileMenu.classList.toggle('hidden');
         });
+
+        if (accountToggle && accountMenu) {
+            accountToggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const willOpen = accountMenu.classList.contains('hidden');
+                cartMini?.classList.add('hidden');
+                accountMenu.classList.toggle('hidden');
+                accountToggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+            });
+            accountMenu.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+            document.addEventListener('click', function() {
+                accountMenu.classList.add('hidden');
+                accountToggle.setAttribute('aria-expanded', 'false');
+            });
+        }
 
         // Cart toggle
         const cartToggle = document.getElementById('cart-toggle');
@@ -108,6 +158,8 @@
         if (cartToggle && cartMini) {
             cartToggle.addEventListener('click', function(e) {
                 e.stopPropagation();
+                accountMenu?.classList.add('hidden');
+                accountToggle?.setAttribute('aria-expanded', 'false');
                 cartMini.classList.toggle('hidden');
             });
             document.addEventListener('click', function() {
@@ -184,9 +236,11 @@ function getWishlistCount() {
     .catch(error => console.error('Error fetching wishlist count:', error));
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    getWishlistCount();
-});
+@auth
+    document.addEventListener('DOMContentLoaded', function() {
+        getWishlistCount();
+    });
+@endauth
 
 // ===== CẬP NHẬT CART MINI =====
 function loadCartMini() {

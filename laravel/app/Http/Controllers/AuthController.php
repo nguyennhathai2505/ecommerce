@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 
 use App\Models\User;
+use App\Services\CartService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -15,8 +16,17 @@ class AuthController extends Controller
 {
     //
 
+    protected CartService $cartService;
+
+    public function __construct(CartService $cartService)
+    {
+        $this->cartService = $cartService;
+    }
+
     public function showLogin(){
-        return view('auth.login');
+        return view('auth.login', [
+            'checkoutData'=>session('checkout.form', []),
+        ]);
     }
 
     public function login(Request $request)
@@ -62,15 +72,25 @@ class AuthController extends Controller
         if ($request->hasSession()) {
             $request->session()->regenerate();
         }
+
+        if ($user->isCustomer()) {
+            $this->cartService->mergeGuestCartIntoUser($user);
+        }
         
         if ($user->isAdmin()) {
             return redirect()->route('admin.dashboard');
         }
-        return redirect()->route('customer.dashboard');
+
+        if ($request->session()->pull('checkout.auth_pending', false)) {
+            return redirect()->route('checkout');
+        }
+        return redirect()->route('home');
     }
 
     public function showRegister(){
-        return view('auth.register');
+        return view('auth.register', [
+            'checkoutData'=>session('checkout.form', []),
+        ]);
     }
 
 
@@ -93,6 +113,13 @@ class AuthController extends Controller
 
         Auth::login($user);
 
+        $request->session()->regenerate();
+        $this->cartService->mergeGuestCartIntoUser($user);
+
+        if ($request->session()->pull('checkout.auth_pending', false)) {
+            return redirect()->route('checkout')->with('success', 'Đăng ký thành công.');
+        }
+
         return redirect()->route('customer.dashboard')->with('success', 'Đăng ký thành công');
     }
 
@@ -100,7 +127,7 @@ class AuthController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect('/')->with('success', 'You have been logged out.');
+        return redirect('/')->with('success', 'Đăng xuất thành công.');
     }
 
     /**

@@ -14,7 +14,12 @@ class Cart extends Model
     protected $fillable = [
         'user_id',
         'session_id',
-        'total'
+        'total',
+        'expires_at'
+    ];
+
+    protected $casts = [
+        'expires_at'=>'datetime',
     ];
 
     // protected $casts = [

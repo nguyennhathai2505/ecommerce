@@ -142,7 +142,7 @@ public function add(Request $request)
 
     public function update(Request $request){
         $validator = Validator::make($request->all(), [
-            'item_id'=>'required|exists:cart_items,id',
+            'item_id'=>'required|string',
             'quantity' => 'required|integer|min:1',
         ]);
 
@@ -175,7 +175,7 @@ public function add(Request $request)
 
     public function remove(Request $request){
         $validator = Validator::make($request->all(), [
-            'item_id'=>'required|exists:cart_items,id'
+            'item_id'=>'required|string'
         ]);
 
         if($validator->fails()){

@@ -24,14 +24,21 @@
                     <div class="space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Họ và tên <span class="text-red-500">*</span></label>
-                            <input type="text" name="customer_name" id="customer_name" value="{{ Auth::user()->name }}" 
+                            <input type="text" name="customer_name" id="customer_name" value="{{ old('customer_name', $checkoutData['customer_name'] ?? Auth::user()?->name ?? '') }}"
                                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-black focus:border-transparent" required>
                             <p class="text-red-500 text-sm mt-1 hidden error-message" id="customer_name_error"></p>
                         </div>
 
                         <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email <span class="text-red-500">*</span></label>
+                            <input type="email" name="customer_email" id="customer_email" value="{{ old('customer_email', $checkoutData['customer_email'] ?? Auth::user()?->email ?? '') }}"
+                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-black focus:border-transparent" required>
+                            <p class="text-red-500 text-sm mt-1 hidden error-message" id="customer_email_error"></p>
+                        </div>
+
+                        <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Số điện thoại <span class="text-red-500">*</span></label>
-                            <input type="text" name="customer_phone" id="customer_phone" value="{{ Auth::user()->phone ?? '' }}" 
+                            <input type="text" name="customer_phone" id="customer_phone" value="{{ old('customer_phone', $checkoutData['customer_phone'] ?? Auth::user()?->phone ?? '') }}"
                                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-black focus:border-transparent" required>
                             <p class="text-red-500 text-sm mt-1 hidden error-message" id="customer_phone_error"></p>
                         </div>
@@ -39,22 +46,22 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Địa chỉ giao hàng <span class="text-red-500">*</span></label>
                             <textarea name="shipping_address" id="shipping_address" rows="3" 
-                                      class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-black focus:border-transparent" required></textarea>
+                                      class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-black focus:border-transparent" required>{{ old('shipping_address', $checkoutData['shipping_address'] ?? '') }}</textarea>
                             <p class="text-red-500 text-sm mt-1 hidden error-message" id="shipping_address_error"></p>
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Ghi chú (tùy chọn)</label>
                             <textarea name="note" id="note" rows="2" 
-                                      class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-black focus:border-transparent"></textarea>
+                                      class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-black focus:border-transparent">{{ old('note', $checkoutData['note'] ?? '') }}</textarea>
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Phương thức thanh toán</label>
                             <select name="payment_method" id="payment_method" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-black focus:border-transparent">
-                                <option value="cod">Thanh toán khi nhận hàng (COD)</option>
-                                <option value="banking" disabled>Chuyển khoản ngân hàng (Sắp có)</option>
-                                <option value="momo" disabled>MoMo (Sắp có)</option>
+                                <option value="cod" @selected(($checkoutData['payment_method'] ?? 'cod') === 'cod')>Thanh toán khi nhận hàng (COD)</option>
+                                <option value="banking" @selected(($checkoutData['payment_method'] ?? '') === 'banking') disabled>Chuyển khoản ngân hàng (Sắp có)</option>
+                                <option value="momo" @selected(($checkoutData['payment_method'] ?? '') === 'momo') disabled>MoMo (Sắp có)</option>
                             </select>
                         </div>
                     </div>
@@ -109,6 +116,29 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('checkout-form');
     const submitBtn = document.getElementById('place-order-btn');
     const messageDiv = document.getElementById('order-message');
+    const wasAuthenticated = @json(Auth::check());
+
+    function showSessionExpiredMessage() {
+        messageDiv.className = 'mt-3 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg';
+        messageDiv.textContent = wasAuthenticated
+            ? 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'
+            : 'Phiên làm việc đã hết hạn. Vui lòng tải lại trang để tiếp tục.';
+
+        const action = document.createElement(wasAuthenticated ? 'a' : 'button');
+        action.className = 'mt-2 block font-medium underline';
+        action.textContent = wasAuthenticated ? 'Đăng nhập lại' : 'Tải lại trang';
+        if (wasAuthenticated) {
+            action.href = '{{ route('login') }}';
+        } else {
+            action.type = 'button';
+            action.addEventListener('click', function() {
+                window.location.reload();
+            });
+        }
+        messageDiv.appendChild(action);
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Phiên đã hết hạn';
+    }
 
     form.addEventListener('submit', function(e) {
         e.preventDefault();
@@ -125,17 +155,41 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch('{{ route("checkout.place") }}', {
             method: 'POST',
             headers: {
+                'Accept': 'application/json',
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
             },
             body: JSON.stringify(data),
         })
-        .then(response => response.json())
+        .then(response => {
+            if (response.status === 419 || (response.status === 401 && wasAuthenticated)) {
+                showSessionExpiredMessage();
+                return null;
+            }
+
+            return response.json();
+        })
         .then(data => {
+            if (!data) return;
+
+            if (data.requires_auth && data.redirect_url) {
+                window.showAuthRequiredModal?.({
+                    title: 'Đăng ký để thanh toán',
+                    message: 'Giỏ hàng và thông tin giao hàng của bạn đã được lưu.',
+                    primaryText: 'Đăng ký',
+                    primaryUrl: data.redirect_url,
+                    secondaryText: 'Đăng nhập',
+                    secondaryUrl: '{{ route('login') }}',
+                });
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Đặt hàng';
+                return;
+            }
+
             if (data.success) {
                 messageDiv.className = 'mt-3 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg';
                 messageDiv.innerHTML = `
-                    ✅ ${data.message}<br>
+                    ${data.message}<br>
                     Mã đơn hàng: <strong>${data.order_code}</strong>
                 `;
                 messageDiv.classList.remove('hidden');
@@ -162,7 +216,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 } else {
                     messageDiv.className = 'mt-3 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg';
-                    messageDiv.textContent = '❌ ' + (data.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
+                    messageDiv.textContent = data.message || 'Có lỗi xảy ra. Vui lòng thử lại.';
                     messageDiv.classList.remove('hidden');
                 }
                 submitBtn.disabled = false;
@@ -171,7 +225,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             messageDiv.className = 'mt-3 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg';
-            messageDiv.textContent = '❌ Có lỗi xảy ra. Vui lòng thử lại.';
+            messageDiv.textContent = 'Có lỗi xảy ra. Vui lòng thử lại.';
             messageDiv.classList.remove('hidden');
             submitBtn.disabled = false;
             submitBtn.textContent = 'Đặt hàng';

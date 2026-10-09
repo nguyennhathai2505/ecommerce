@@ -194,17 +194,17 @@
             const isShoe = @json($product->product_type === 'SHOE');
 
             if (!sizeBtn) {
-                alert('Vui lòng chọn size.');
+                window.showToast('Vui lòng chọn size.', 'error');
                 return;
             }
 
             if (!colorBtn) {
-                alert('Vui lòng chọn màu sắc.');
+                window.showToast('Vui lòng chọn màu sắc.', 'error');
                 return;
             }
 
             if (isShoe && !studBtn) {
-                alert('Vui lòng chọn loại đinh.');
+                window.showToast('Vui lòng chọn loại đinh.', 'error');
                 return;
             }
 
@@ -219,7 +219,7 @@
             );
 
             if (!variant) {
-                alert('Biến thể sản phẩm đã chọn không tồn tại.');
+                window.showToast('Biến thể sản phẩm đã chọn không tồn tại.', 'error');
                 return;
             }
 
@@ -248,14 +248,14 @@
                     if (window.loadCartMini) {
                         window.loadCartMini();
                     }
-                    alert(data.message);
+                    window.showToast(data.message || 'Đã thêm vào giỏ hàng.');
                 } else {
-                    alert(data.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
+                    window.showToast(data.message || 'Có lỗi xảy ra. Vui lòng thử lại.', 'error');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Có lỗi xảy ra. Vui lòng thử lại.');
+                window.showToast('Có lỗi xảy ra. Vui lòng thử lại.', 'error');
             });
         });
 
@@ -274,7 +274,7 @@ document.getElementById('buy-now')?.addEventListener('click', function() {
     const quantity = parseInt(document.getElementById('quantity').value) || 1;
     
     if (!sizeBtn || !colorBtn) {
-        alert('Vui lòng chọn size và màu sắc.');
+        window.showToast('Vui lòng chọn size và màu sắc.', 'error');
         return;
     }
     
@@ -307,12 +307,12 @@ document.getElementById('buy-now')?.addEventListener('click', function() {
             }
             window.location.href = '{{ route("checkout") }}';
         } else {
-            alert(data.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
+            window.showToast(data.message || 'Có lỗi xảy ra. Vui lòng thử lại.', 'error');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Có lỗi xảy ra. Vui lòng thử lại.');
+        window.showToast('Có lỗi xảy ra. Vui lòng thử lại.', 'error');
     });
 });
 

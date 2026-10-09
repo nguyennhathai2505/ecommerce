@@ -274,7 +274,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         this.disabled = false;
                     }, 2000);
                 } else {
-                    alert(data.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
+                    window.showToast(data.message || 'Có lỗi xảy ra. Vui lòng thử lại.', 'error');
                     this.textContent = originalText;
                     this.disabled = false;
                 }
@@ -282,7 +282,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => {
                 this.dataset.processing = 'false';
                 console.error('Error:', error);
-                alert('Có lỗi xảy ra. Vui lòng thử lại.');
+                window.showToast('Có lỗi xảy ra. Vui lòng thử lại.', 'error');
                 this.textContent = originalText;
                 this.disabled = false;
             });

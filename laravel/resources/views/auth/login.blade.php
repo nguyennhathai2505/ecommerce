@@ -29,7 +29,7 @@
                 <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
                     <i class="fas fa-envelope"></i>
                 </span>
-                <input type="email" name="email" id="email" value="{{ old('email') }}" placeholder="example@domain.com"
+                <input type="email" name="email" id="email" value="{{ old('email', $checkoutData['customer_email'] ?? '') }}" placeholder="example@domain.com"
                     class="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent @error('email') border-red-500 @enderror">
             </div>
             @error('email')

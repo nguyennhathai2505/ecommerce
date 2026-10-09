@@ -1,6 +1,10 @@
 <form action="{{ route($product->is_wishlisted ? 'customer.wishlist.destroy' : 'customer.wishlist.store', $product) }}"
       method="POST"
-      class="{{ $variant === 'detail' ? 'flex' : 'w-full sm:w-auto' }}">
+      class="{{ $variant === 'detail' ? 'flex' : 'w-full sm:w-auto' }}"
+      @guest
+          data-auth-required="wishlist"
+          data-auth-message="Đăng nhập để thêm sản phẩm này vào danh sách yêu thích."
+      @endguest>
     @csrf
     @if($product->is_wishlisted)
         @method('DELETE')

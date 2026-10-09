@@ -51,7 +51,7 @@
                 <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
                     <i class="fas fa-user"></i>
                 </span>
-                <input type="text" name="name" id="name" value="{{ old('name') }}" placeholder="Nguyễn Văn A"
+                <input type="text" name="name" id="name" value="{{ old('name', $checkoutData['customer_name'] ?? '') }}" placeholder="Nguyễn Văn A"
                     class="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent @error('name') border-red-500 @enderror">
             </div>
             @error('name')
@@ -66,7 +66,7 @@
                 <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
                     <i class="fas fa-envelope"></i>
                 </span>
-                <input type="email" name="email" id="email" value="{{ old('email') }}" placeholder="example@domain.com"
+                <input type="email" name="email" id="email" value="{{ old('email', $checkoutData['customer_email'] ?? '') }}" placeholder="example@domain.com"
                     class="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent @error('email') border-red-500 @enderror">
             </div>
             @error('email')
@@ -81,7 +81,7 @@
                 <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
                     <i class="fas fa-phone"></i>
                 </span>
-                <input type="text" name="phone" id="phone" value="{{ old('phone') }}" placeholder="0912 345 678"
+                <input type="text" name="phone" id="phone" value="{{ old('phone', $checkoutData['customer_phone'] ?? '') }}" placeholder="0912 345 678"
                     class="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent">
             </div>
         </div>
