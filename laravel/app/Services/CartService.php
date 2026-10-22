@@ -34,6 +34,79 @@ class CartService{
             $this->cookies = $cookies;
         }
 
+        public function getItemIssues(Cart $cart): array
+        {
+            $cart->loadMissing('items.product');
+            $variants = [];
+
+            foreach (['shoe' => ShoesVariant::class, 'cloth' => ClothesVariant::class] as $type => $model) {
+                $ids = $cart->items->where('variant_type', $type)->pluck('variant_id')->unique();
+                $variants[$type] = $ids->isEmpty() ? collect() : $model::whereIn('id', $ids)->get()->keyBy('id');
+            }
+
+            $quantities = $cart->items->groupBy(fn ($item) => $item->variant_type . ':' . $item->variant_id)
+                ->map(fn ($items) => $items->sum('quantity'));
+            $issues = [];
+
+            foreach ($cart->items as $item) {
+                $variant = ($variants[$item->variant_type] ?? collect())->get($item->variant_id);
+                $issue = $this->getItemIssue($item, $item->product, $variant, $quantities[$item->variant_type . ':' . $item->variant_id]);
+                if ($issue) {
+                    $issues[$item->id] = $issue;
+                }
+            }
+
+            return $issues;
+        }
+
+        public function getItemIssue(CartItem $item, ?Product $product, ShoesVariant|ClothesVariant|null $variant, int $quantity): ?array
+        {
+            $options = array_filter([
+                $item->color ? 'màu ' . $item->color : null,
+                $item->size ? 'size ' . $item->size : null,
+                $item->stud_type ? 'loại đinh ' . $item->stud_type : null,
+            ]);
+            $name = ($product?->name ?? 'Sản phẩm không còn tồn tại') . ($options ? ' (' . implode(', ', $options) . ')' : '');
+
+            if (!$product || $product->status !== 'active' || !$variant || $variant->status !== 'active') {
+                return [
+                    'status' => 'unavailable',
+                    'label' => 'Sản phẩm ngừng bán',
+                    'message' => $name . ': Sản phẩm ngừng bán. Vui lòng xóa khỏi giỏ hàng.',
+                ];
+            }
+
+            if ((int) $variant->product_id !== (int) $product->id
+                || $product->product_type !== ($item->variant_type === 'shoe' ? 'SHOE' : 'CLOTH')
+                || (string) $item->size !== (string) $variant->size
+                || (string) $item->color !== (string) $variant->color
+                || (string) $item->stud_type !== (string) ($item->variant_type === 'shoe' ? $variant->stud_type : null)) {
+                return [
+                    'status' => 'changed',
+                    'label' => 'Cần chọn lại sản phẩm',
+                    'message' => $name . ': Lựa chọn sản phẩm đã thay đổi. Vui lòng chọn lại size, màu hoặc loại đinh.',
+                ];
+            }
+
+            if ($variant->quantity <= 0) {
+                return [
+                    'status' => 'out_of_stock',
+                    'label' => 'Tạm hết hàng',
+                    'message' => $name . ': Tạm hết hàng. Vui lòng chọn sản phẩm khác hoặc xóa khỏi giỏ hàng.',
+                ];
+            }
+
+            if ($quantity > $variant->quantity) {
+                return [
+                    'status' => 'insufficient_stock',
+                    'label' => 'Số lượng không đủ',
+                    'message' => $name . ': Chỉ còn ' . $variant->quantity . ' sản phẩm. Vui lòng giảm số lượng.',
+                ];
+            }
+
+            return null;
+        }
+
         protected function resolveCart(){
             if(Auth::check()){
                 $cart =Cart::firstOrCreate([

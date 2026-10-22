@@ -3,7 +3,7 @@
 @section('title', 'Chi tiết đơn hàng #' . $order->order_code)
 
 @section('content')
-<div class="max-w-5xl mx-auto">
+<div class="max-w-5xl mx-auto" data-order-realtime data-order-channel="admin.orders" data-order-status-url="{{ route('admin.orders.statuses') }}">
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 class="text-2xl font-bold">Đơn hàng #{{ $order->order_code }}</h1>
         <div class="flex items-center gap-3">
@@ -17,17 +17,8 @@
         </div>
     </div>
 
-    @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-            {{ session('success') }}
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {{ session('error') }}
-        </div>
-    @endif
+    @include('customer.partials.toast')
+    @include('customer.partials.confirm-modal')
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Thông tin đơn hàng -->

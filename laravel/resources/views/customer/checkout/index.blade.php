@@ -12,6 +12,9 @@
 @section('content')
 <div class="max-w-4xl mx-auto">
     <h1 class="text-2xl font-bold text-gray-900 mb-6">Thanh toán</h1>
+    @if($pricesChanged)
+        <p class="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">Giá sản phẩm đã được cập nhật theo giá hiện tại. Vui lòng kiểm tra lại tóm tắt đơn hàng trước khi đặt.</p>
+    @endif
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <!-- Form thông tin -->
@@ -21,6 +24,7 @@
                 
                 <form id="checkout-form">
                     @csrf
+                    <input type="hidden" name="checkout_fingerprint" value="{{ $checkoutFingerprint }}">
                     <div class="space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Họ và tên <span class="text-red-500">*</span></label>
@@ -142,12 +146,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     form.addEventListener('submit', function(e) {
         e.preventDefault();
+        if (submitBtn.disabled) return;
         submitBtn.disabled = true;
         submitBtn.textContent = 'Đang xử lý...';
 
         // Clear old errors
         document.querySelectorAll('.error-message').forEach(el => el.classList.add('hidden'));
         document.querySelectorAll('.border-red-500').forEach(el => el.classList.remove('border-red-500'));
+        messageDiv.replaceChildren();
+        messageDiv.classList.add('hidden');
 
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
@@ -201,6 +208,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     window.location.href = '/customer/orders';
                 }, 3000);
             } else {
+                if (data.refresh_checkout) {
+                    messageDiv.className = 'mt-3 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg';
+                    messageDiv.textContent = data.message;
+                    window.showToast?.(data.message, 'error');
+
+                    const action = document.createElement('a');
+                    action.className = 'mt-2 block font-medium underline';
+                    action.href = data.redirect_url;
+                    action.textContent = 'Kiểm tra lại đơn hàng';
+                    messageDiv.appendChild(action);
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Cần kiểm tra lại đơn hàng';
+                    return;
+                }
+
                 if (data.errors) {
                     // Hiển thị lỗi validation
                     Object.keys(data.errors).forEach(key => {

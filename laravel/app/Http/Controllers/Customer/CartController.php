@@ -28,8 +28,9 @@ class CartController extends Controller
         $cart = $this->cartService->getCart();
         $cartTotal = $this->cartService->getCartTotal();
         $itemImages = $this->productService->getItemImages($cart->items);
+        $itemIssues = $this->cartService->getItemIssues($cart);
 
-        return view('customer.cart.index', compact('cart', 'cartTotal', 'itemImages'));
+        return view('customer.cart.index', compact('cart', 'cartTotal', 'itemImages', 'itemIssues'));
     }
 
 

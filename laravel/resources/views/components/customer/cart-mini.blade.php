@@ -23,13 +23,17 @@
     <div class="max-h-64 overflow-y-auto">
         @if($cartItems->count() > 0)
             @foreach($cartItems as $item)
-                <div class="px-4 py-2 hover:bg-gray-50 flex items-center space-x-3 border-b border-gray-100">
+                @php
+                    $issue = $itemIssues[$item->id] ?? null;
+                    $isUnavailable = $issue && $issue['status'] !== 'insufficient_stock';
+                @endphp
+                <div @class(['px-4 py-2 hover:bg-gray-50 flex items-center space-x-3 border-b border-gray-100', 'bg-gray-50' => $isUnavailable])>
                     <div class="w-10 h-10 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
                         @php
                             $image = $itemImages[$item->id] ?? null;
                         @endphp
                         @if($image)
-                            <img src="{{ $image }}" alt="{{ $item->product->name }}" class="w-full h-full object-cover rounded">
+                            <img src="{{ $image }}" alt="{{ $item->product?->name }}" class="w-full h-full object-cover rounded @if($isUnavailable) opacity-60 @endif">
                         @else
                             <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -37,7 +41,10 @@
                         @endif
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-xs font-medium text-gray-900 truncate">{{ $item->product->name }}</p>
+                        <p @class(['text-xs font-medium truncate', 'text-gray-500' => $isUnavailable, 'text-gray-900' => !$isUnavailable])>{{ $item->product?->name ?? 'Sản phẩm không còn tồn tại' }}</p>
+                        @if($issue)
+                            <p class="mt-1 text-xs font-medium text-gray-600">{{ $issue['label'] }}</p>
+                        @endif
                         <p class="text-xs text-gray-500">
                             {{ $item->size }} / {{ $item->color }}
                             @if($item->stud_type) / {{ $item->stud_type }} @endif
