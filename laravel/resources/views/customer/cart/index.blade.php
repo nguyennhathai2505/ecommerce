@@ -25,15 +25,19 @@
                     </thead>
                     <tbody id="cart-items">
                         @foreach($cart->items as $item)
-                            <tr class="border-b cart-item" data-item-id="{{ $item->guest_key ?? $item->id }}">
+                            @php
+                                $issue = $itemIssues[$item->id] ?? null;
+                                $isUnavailable = $issue && $issue['status'] !== 'insufficient_stock';
+                            @endphp
+                            <tr @class(['border-b cart-item', 'bg-gray-50' => $isUnavailable]) data-item-id="{{ $item->guest_key ?? $item->id }}">
                                 <td class="px-4 py-3">
-                                    <div class="flex items-center space-x-3">
+                                    <div @class(['flex items-center space-x-3', 'opacity-60' => $isUnavailable])>
                                         <div class="w-12 h-12 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
                                             @php
                                                 $image = $itemImages[$item->id] ?? null;
                                             @endphp
                                             @if($image)
-                                                <img src="{{ $image }}" alt="{{ $item->product->name }}" class="w-full h-full object-cover rounded">
+                                                <img src="{{ $image }}" alt="{{ $item->product?->name }}" class="w-full h-full object-cover rounded">
                                             @else
                                                 <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -41,11 +45,19 @@
                                             @endif
                                         </div>
                                         <div>
-                                            <a href="{{ route('products.show', $item->product->slug) }}" class="text-sm font-medium text-gray-900 hover:text-black">
-                                                {{ $item->product->name }}
-                                            </a>
+                                            @if($item->product && $item->product->status === 'active')
+                                                <a href="{{ route('products.show', $item->product->slug) }}" class="text-sm font-medium text-gray-900 hover:text-black">
+                                                    {{ $item->product->name }}
+                                                </a>
+                                            @else
+                                                <span class="text-sm font-medium text-gray-600">{{ $item->product?->name ?? 'Sản phẩm không còn tồn tại' }}</span>
+                                            @endif
                                         </div>
                                     </div>
+                                    @if($issue)
+                                        <span class="mt-2 inline-flex rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">{{ $issue['label'] }}</span>
+                                        <p class="mt-1 text-xs text-gray-600">{{ $issue['message'] }}</p>
+                                    @endif
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="text-sm text-gray-600">
@@ -58,9 +70,9 @@
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-center space-x-2">
-                                        <button class="quantity-decrease border border-gray-300 rounded-lg px-2 py-1 hover:bg-gray-50 text-sm">−</button>
-                                        <input type="number" class="quantity-input w-14 text-center border border-gray-300 rounded-lg py-1 text-sm" value="{{ $item->quantity }}" min="1">
-                                        <button class="quantity-increase border border-gray-300 rounded-lg px-2 py-1 hover:bg-gray-50 text-sm">+</button>
+                                        <button @disabled($isUnavailable) class="quantity-decrease border border-gray-300 rounded-lg px-2 py-1 hover:bg-gray-50 text-sm disabled:cursor-not-allowed disabled:opacity-50">−</button>
+                                        <input @disabled($isUnavailable) type="number" class="quantity-input w-14 text-center border border-gray-300 rounded-lg py-1 text-sm disabled:bg-gray-100 disabled:text-gray-500" value="{{ $item->quantity }}" min="1">
+                                        <button @disabled($isUnavailable) class="quantity-increase border border-gray-300 rounded-lg px-2 py-1 hover:bg-gray-50 text-sm disabled:cursor-not-allowed disabled:opacity-50">+</button>
                                     </div>
                                 </td>
                                 <td class="px-4 py-3 text-right font-medium text-gray-900">

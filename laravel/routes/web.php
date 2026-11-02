@@ -69,8 +69,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
 
     Route::get('/orders', [AdminOrderController::class, 'index'])->name('admin.orders.index');
     Route::get('/orders/search', [AdminOrderController::class, 'search'])->name('admin.orders.search');
+    Route::get('/orders/statuses', [AdminOrderController::class, 'statuses'])->middleware('throttle:120,1')->name('admin.orders.statuses');
     Route::get('/orders/{id}', [AdminOrderController::class, 'show'])->name('admin.orders.show');
-    Route::post('/orders/{id}/status', [AdminOrderController::class, 'updateStatus'])->name('admin.orders.update-status');
+    Route::post('/orders/{id}/status', [AdminOrderController::class, 'updateStatus'])->whereNumber('id')->name('admin.orders.update-status');
 
 
 });
@@ -87,7 +88,9 @@ Route::middleware(['auth', 'role:customer'])->prefix('customer')->group(function
 
     // Order history
     Route::get('/orders', [OrderController::class, 'index'])->name('customer.orders');
+    Route::get('/orders/statuses', [OrderController::class, 'statuses'])->middleware('throttle:120,1')->name('customer.orders.statuses');
     Route::get('/orders/{id}', [OrderController::class, 'show'])->name('customer.orders.show');
+    Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel'])->middleware('throttle:30,1')->whereNumber('id')->name('customer.orders.cancel');
 });
 
 Route::get('/dashboard', function () {

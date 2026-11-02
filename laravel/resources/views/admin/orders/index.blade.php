@@ -3,20 +3,10 @@
 @section('title', 'Quản lý đơn hàng')
 
 @section('content')
-<div class="max-w-6xl mx-auto">
+<div class="max-w-6xl mx-auto" data-order-realtime data-order-channel="admin.orders" data-order-status-url="{{ route('admin.orders.statuses') }}">
     <h1 class="text-2xl font-bold mb-6">Quản lý đơn hàng</h1>
 
-    @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-            {{ session('success') }}
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {{ session('error') }}
-        </div>
-    @endif
+    @include('customer.partials.toast')
 
     <form action="{{ route('admin.orders.search') }}" method="GET" id="order-search-form" class="mb-6 rounded-xl border border-gray-200 bg-white p-5">
         <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
