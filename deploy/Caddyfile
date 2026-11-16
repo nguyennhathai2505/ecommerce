@@ -1,0 +1,25 @@
+{$APP_DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	@fastapi path /ai /ai/*
+	handle @fastapi {
+		uri strip_prefix /ai
+		reverse_proxy fastapi:8001
+	}
+
+	@reverb path /app/* /apps/*
+	handle @reverb {
+		reverse_proxy laravel-reverb:8080
+	}
+
+	handle {
+		reverse_proxy laravel-web:8080
+	}
+}

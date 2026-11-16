@@ -11,7 +11,12 @@ class VectorStoreService:
     """Quản lý collection và dữ liệu vector trên Qdrant."""
 
     def __init__(self):
-        self.client = AsyncQdrantClient(host=settings.QDRANT_HOST, port=settings.QDRANT_PORT)
+        self.client = AsyncQdrantClient(
+            host=settings.QDRANT_HOST,
+            port=settings.QDRANT_PORT,
+            https=settings.QDRANT_HTTPS,
+            api_key=settings.QDRANT_API_KEY or None,
+        )
         self.collection = settings.QDRANT_COLLECTION
         self.vector_size = settings.QDRANT_VECTOR_SIZE
 

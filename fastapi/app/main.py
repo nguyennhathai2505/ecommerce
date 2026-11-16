@@ -45,6 +45,7 @@ app = FastAPI(
     title="Recommendation Service",
     version="1.0",
     lifespan=lifespan,
+    root_path=settings.API_ROOT_PATH,
 )
 
 app.include_router(health.router)

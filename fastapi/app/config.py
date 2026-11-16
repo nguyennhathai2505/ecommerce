@@ -1,5 +1,7 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
+from sqlalchemy.engine import URL
+from urllib.parse import quote
 
 
 class Settings(BaseSettings):
@@ -7,6 +9,7 @@ class Settings(BaseSettings):
     APP_ENV: str = "local"
     APP_HOST: str = "0.0.0.0"
     APP_PORT: int = 8001
+    API_ROOT_PATH: str = ""
     DEBUG: bool = True
 
     # Database
@@ -20,6 +23,9 @@ class Settings(BaseSettings):
     REDIS_HOST: str = "127.0.0.1"
     REDIS_PORT: int = 6379
     REDIS_DB: int = 0
+    REDIS_USERNAME: str = ""
+    REDIS_PASSWORD: str = ""
+    REDIS_SSL: bool = False
 
     # RabbitMQ
     RABBITMQ_HOST: str = "127.0.0.1"
@@ -33,6 +39,8 @@ class Settings(BaseSettings):
     QDRANT_PORT: int = 6333
     QDRANT_COLLECTION: str = "products"
     QDRANT_VECTOR_SIZE: int = 1536
+    QDRANT_HTTPS: bool = False
+    QDRANT_API_KEY: str = ""
 
     # OpenAI
     OPENAI_API_KEY: str = ""
@@ -44,15 +52,28 @@ class Settings(BaseSettings):
     LARAVEL_API_TOKEN: str = ""
 
     @property
-    def database_url(self) -> str:
-        return (
-            f"mysql+pymysql://{self.DB_USER}:{self.DB_PASSWORD}"
-            f"@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+    def database_url(self) -> URL:
+        return URL.create(
+            drivername="mysql+pymysql",
+            username=self.DB_USER,
+            password=self.DB_PASSWORD,
+            host=self.DB_HOST,
+            port=self.DB_PORT,
+            database=self.DB_NAME,
         )
 
     @property
     def redis_url(self) -> str:
-        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
+        scheme = "rediss" if self.REDIS_SSL else "redis"
+        credentials = ""
+        if self.REDIS_PASSWORD:
+            username = quote(self.REDIS_USERNAME, safe="") if self.REDIS_USERNAME else ""
+            password = quote(self.REDIS_PASSWORD, safe="")
+            credentials = f"{username}:{password}@"
+        return (
+            f"{scheme}://{credentials}{self.REDIS_HOST}:"
+            f"{self.REDIS_PORT}/{self.REDIS_DB}"
+        )
 
     @property
     def rabbitmq_url(self) -> str:

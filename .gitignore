@@ -51,6 +51,11 @@
 /fastapi/*.sqlite
 /fastapi/*.sqlite3
 
+# Production deployment secrets
+/.env.production
+/deploy/laravel.env.production
+/deploy/fastapi.env.production
+
 # ==============================
 # IDE / Editors
 # ==============================
