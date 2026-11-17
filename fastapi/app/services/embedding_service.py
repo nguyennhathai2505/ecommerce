@@ -1,5 +1,6 @@
 from typing import List, Optional
-from openai import AsyncOpenAI
+from google import genai
+from google.genai import types
 from tenacity import retry, stop_after_attempt, wait_exponential
 from app.config import get_settings
 from app.utils.logger import logger
@@ -8,11 +9,16 @@ settings = get_settings()
 
 
 class EmbeddingService:
-    """Sinh embedding vector cho text bằng OpenAI hoặc API bên thứ 3 tương thích."""
+    """Sinh embedding vector cho text bằng Gemini."""
 
     def __init__(self):
-        self.client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
-        self.model = settings.OPENAI_EMBEDDING_MODEL
+        self._sdk_client = genai.Client(api_key=settings.GEMINI_API_KEY)
+        self.client = self._sdk_client.aio
+        self.model = settings.GEMINI_EMBEDDING_MODEL
+
+    async def close(self) -> None:
+        await self.client.aclose()
+        self._sdk_client.close()
 
     @retry(
         stop=stop_after_attempt(3),
@@ -25,11 +31,17 @@ class EmbeddingService:
             return [0.0] * settings.QDRANT_VECTOR_SIZE
 
         try:
-            response = await self.client.embeddings.create(
+            response = await self.client.models.embed_content(
                 model=self.model,
-                input=text.strip()[:8000],
+                contents=text.strip()[:8000],
+                config=types.EmbedContentConfig(
+                    task_type="RETRIEVAL_DOCUMENT",
+                    output_dimensionality=settings.QDRANT_VECTOR_SIZE,
+                ),
             )
-            vector = response.data[0].embedding
+            if not response.embeddings or response.embeddings[0].values is None:
+                raise ValueError("Gemini returned no embedding.")
+            vector = response.embeddings[0].values
             logger.info(f"Embedding generated, dim={len(vector)}")
             return vector
         except Exception as e:
@@ -40,12 +52,34 @@ class EmbeddingService:
         """Sinh embedding cho nhiều text một lúc (batch)."""
         if not texts:
             return []
+
+        non_empty_texts = [
+            (index, text.strip()[:8000])
+            for index, text in enumerate(texts)
+            if text and text.strip()
+        ]
+        if not non_empty_texts:
+            return [[0.0] * settings.QDRANT_VECTOR_SIZE for _ in texts]
+
         try:
-            response = await self.client.embeddings.create(
+            response = await self.client.models.embed_content(
                 model=self.model,
-                input=[t.strip()[:8000] if t else "" for t in texts],
+                contents=[text for _, text in non_empty_texts],
+                config=types.EmbedContentConfig(
+                    task_type="RETRIEVAL_DOCUMENT",
+                    output_dimensionality=settings.QDRANT_VECTOR_SIZE,
+                ),
             )
-            return [d.embedding for d in response.data]
+            embeddings = response.embeddings or []
+            if len(embeddings) != len(non_empty_texts):
+                raise ValueError("Gemini returned an unexpected number of embeddings.")
+
+            results = [[0.0] * settings.QDRANT_VECTOR_SIZE for _ in texts]
+            for (index, _), embedding in zip(non_empty_texts, embeddings):
+                if embedding.values is None:
+                    raise ValueError("Gemini returned an empty embedding.")
+                results[index] = embedding.values
+            return results
         except Exception as e:
             logger.error(f"Batch embedding error: {e}")
             raise

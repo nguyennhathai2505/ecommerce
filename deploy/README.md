@@ -13,6 +13,8 @@ This Compose setup runs Laravel and FastAPI as separate application services on 
 
 FastAPI supports Redis username/password and TLS (`REDIS_SSL`), plus Qdrant API key and HTTPS (`QDRANT_API_KEY`, `QDRANT_HTTPS`). Its MySQL connection uses a SQLAlchemy URL object so passwords containing reserved URL characters are handled correctly. Laravel's RabbitMQ package configuration in this repository uses its configured host/port credentials; keep RabbitMQ on a private network unless TLS is configured separately.
 
+FastAPI uses the Gemini Developer API for chat ranking and embeddings. Set `GEMINI_API_KEY` and use the Gemini model names in the FastAPI environment file. Gemini embeddings are stored in the `products_gemini` Qdrant collection by default; do not mix vectors created by a different embedding model in the same collection. After changing embedding models, re-sync products to generate new vectors.
+
 ## Build and start
 
 Build and publish immutable images from CI using the release's `IMAGE_PREFIX` and `IMAGE_TAG`. On the VPS, authenticate to the registry and run these commands from the repository root:

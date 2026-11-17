@@ -15,7 +15,7 @@ def get_embedding_service(request: Request) -> EmbeddingService:
     if service is None:
         raise HTTPException(
             status_code=503,
-            detail="Embedding service is unavailable; configure OPENAI_API_KEY.",
+            detail="Embedding service is unavailable; configure GEMINI_API_KEY.",
         )
     return service
 
@@ -25,7 +25,7 @@ def get_llm_service(request: Request) -> LLMService:
     if service is None:
         raise HTTPException(
             status_code=503,
-            detail="Recommendation ranking is unavailable; configure OPENAI_API_KEY.",
+            detail="Recommendation ranking is unavailable; configure GEMINI_API_KEY.",
         )
     return service
 

@@ -98,7 +98,7 @@ async def recommend_similar_products(
     llm_service: LLMService = Depends(get_llm_service),
     vector_store: VectorStoreService = Depends(get_vector_store_service),
 ) -> RecommendationResponse:
-    cache_key = f"recommendations:similar:{product_id}:{limit}"
+    cache_key = f"recommendations:gemini:similar:{product_id}:{limit}"
     cached = await _cached_response(cache, cache_key)
     if cached is not None:
         return cached
@@ -151,7 +151,7 @@ async def recommend_for_user(
     llm_service: LLMService = Depends(get_llm_service),
     vector_store: VectorStoreService = Depends(get_vector_store_service),
 ) -> RecommendationResponse:
-    cache_key = f"recommendations:personalized:{user_id}:{limit}"
+    cache_key = f"recommendations:gemini:personalized:{user_id}:{limit}"
     cached = await _cached_response(cache, cache_key)
     if cached is not None:
         return cached

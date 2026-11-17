@@ -21,7 +21,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     llm_service = None
 
     await cache_service.connect()
-    if settings.OPENAI_API_KEY.strip():
+    if settings.GEMINI_API_KEY.strip():
         embedding_service = EmbeddingService()
         llm_service = LLMService()
 
@@ -36,9 +36,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         await cache_service.close()
         await vector_store_service.client.close()
         if embedding_service:
-            await embedding_service.client.close()
+            await embedding_service.close()
         if llm_service:
-            await llm_service.client.close()
+            await llm_service.close()
 
 
 app = FastAPI(

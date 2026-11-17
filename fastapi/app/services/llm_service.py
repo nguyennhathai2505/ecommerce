@@ -1,6 +1,7 @@
 import json
 from typing import List, Dict, Any
-from openai import AsyncOpenAI
+from google import genai
+from google.genai import types
 from tenacity import retry, stop_after_attempt, wait_exponential
 from app.config import get_settings
 from app.utils.logger import logger
@@ -12,8 +13,13 @@ class LLMService:
     """Gọi LLM để rerank / chọn lọc kết quả cuối cùng từ danh sách ứng viên."""
 
     def __init__(self):
-        self.client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
-        self.model = settings.OPENAI_CHAT_MODEL
+        self._sdk_client = genai.Client(api_key=settings.GEMINI_API_KEY)
+        self.client = self._sdk_client.aio
+        self.model = settings.GEMINI_CHAT_MODEL
+
+    async def close(self) -> None:
+        await self.client.aclose()
+        self._sdk_client.close()
 
     @retry(
         stop=stop_after_attempt(2),
@@ -69,17 +75,19 @@ Yêu cầu:
 ]"""
 
         try:
-            response = await self.client.chat.completions.create(
+            response = await self.client.models.generate_content(
                 model=self.model,
-                messages=[
-                    {"role": "system", "content": "Bạn là chuyên gia gợi ý thời trang, chỉ trả về JSON array hợp lệ."},
-                    {"role": "user", "content": prompt},
-                ],
-                temperature=0.3,
-                response_format={"type": "json_object"},
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction=(
+                        "Bạn là chuyên gia gợi ý thời trang, chỉ trả về JSON array hợp lệ."
+                    ),
+                    temperature=0.3,
+                    response_mime_type="application/json",
+                ),
             )
 
-            content = response.choices[0].message.content or "{}"
+            content = response.text or "[]"
             try:
                 parsed = json.loads(content)
                 # Hỗ trợ cả dạng {"items": [...]} và {"result": [...]}
@@ -90,6 +98,8 @@ Yêu cầu:
                             break
                     else:
                         parsed = []
+                elif not isinstance(parsed, list):
+                    parsed = []
             except json.JSONDecodeError:
                 logger.error(f"LLM JSON parse error: {content}")
                 parsed = []
