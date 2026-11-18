@@ -14,16 +14,20 @@ class CategoryService{
         return Category::with('parent')->get();
     }
 
-    public function getActiveChildrenByParentSlug(string $parentSlug){
-        return Category::query()
-            ->where('status', 'active')
-            ->whereHas('parent', function ($query) use ($parentSlug) {
-                $query->where('slug', $parentSlug)
-                    ->where('status', 'active');
+public function getActiveChildrenByParentSlug(string $parentSlug)
+{
+    return Category::query()
+        ->where('status', 'active')
+        ->where(function ($query) use ($parentSlug) {
+            $query->whereHas('parent', function ($q) use ($parentSlug) {
+                $q->where('slug', $parentSlug)
+                  ->where('status', 'active');
             })
-            ->orderBy('name')
-            ->get();
-    }
+            ->orWhereNull('parent_id');
+        })
+        ->orderBy('name')
+        ->get();
+}
 
     public function getCategoryById($id){
         return Category::with('parent','children')->findOrFail($id);
